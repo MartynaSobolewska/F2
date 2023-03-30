@@ -35,13 +35,13 @@
     ["9"]],
   "<frac>": [[], [".", "<digits>"]],
   "<exp>": [[], ["E", "<sign>", "<digits>"], ["e", "<sign>", "<digits>"]],
-  "<sign>": [[], ["+"], ["-", "p=3"]],
+  "<sign>": [[], ["+"], ["-"]],
   "<ws>": [["<sp1>", "<ws>"], []],
   "<sp1>": [[" "],["\n"],["\t"],["\r"]],
   "<symbol>": [[",", "<members>"]],
   "<symbol-1>": [[",", "<elements>"]],
   "<symbol-2>": [[], ["<symbol>", "<symbol-2>"]],
-  "<symbol-1-1>": [[], ["<symbol-1>", "<symbol-1-1>", "p=3"]],
-  "<character-1>": [[], ["<character>", "<character-1>", "p=2"]],
+  "<symbol-1-1>": [[], ["<symbol-1>", "<symbol-1-1>"]],
+  "<character-1>": [[], ["<character>", "<character-1>"]],
   "<digit-1>": [["<digit>"], ["<digit>", "<digit-1>"]]
 }

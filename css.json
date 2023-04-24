@@ -1,0 +1,2160 @@
+{
+  "<start>": [
+    [
+      "<stylesheet>"
+    ]
+  ],
+  "<stylesheet>": [
+    [
+      "<[CHARSET_SYM_STRING_SEMI]-1>",
+      " ",
+      "<[S_OR_CDO_OR_CDC]-1>",
+      " ",
+      "<[import_CDO_S_OR_CDC_S]-1>",
+      " ",
+      "<[stylesheet_closing_GROUPING]-1>"
+    ]
+  ],
+  "<[CHARSET_SYM_STRING_SEMI]>": [
+    [
+      "<CHARSET_SYM>",
+      " ",
+      "<STRING>",
+      " ;"
+    ]
+  ],
+  "<[S_OR_CDO_OR_CDC]>": [
+    [
+      "<Sp>"
+    ],
+    [
+      "<CDO>"
+    ],
+    [
+      "<CDC>"
+    ]
+  ],
+  "<[import_CDO_S_OR_CDC_S]>": [
+    [
+      "<import>",
+      " ",
+      "<[CDO_S_OR_CDC_S]-1>"
+    ]
+  ],
+  "<[CDO_S_OR_CDC_S]>": [
+    [
+      "<CDO>",
+      " ",
+      "<Ss>"
+    ],
+    [
+      "<CDC>",
+      " ",
+      "<Ss>"
+    ]
+  ],
+  "<[ruleset_OR_media_OR_page]>": [
+    [
+      "<ruleset>"
+    ],
+    [
+      "<media>"
+    ],
+    [
+      "<page>"
+    ]
+  ],
+  "<[stylesheet_closing_GROUPING]>": [
+    [
+      "<[ruleset_OR_media_OR_page]>",
+      " ",
+      "<[CDO_S_OR_CDC_S]-2>"
+    ]
+  ],
+  "<import>": [
+    [
+      "<IMPORT_SYM>",
+      " ",
+      "<Ss>",
+      " ",
+      "<[STRING_OR_URI]>",
+      " ",
+      "<Ss>",
+      " ",
+      "<media_list-1>",
+      " ; ",
+      "<Ss>"
+    ]
+  ],
+  "<[STRING_OR_URI]>": [
+    [
+      "<STRING>"
+    ],
+    [
+      "<URI>"
+    ]
+  ],
+  "<media>": [
+    [
+      "<MEDIA_SYM>",
+      " ",
+      "<Ss>",
+      " ",
+      "<media_list>",
+      " { ",
+      "<Ss>",
+      " ",
+      "<ruleset-1>",
+      " } ",
+      "<Ss>"
+    ]
+  ],
+  "<media_list>": [
+    [
+      "<medium>",
+      " ",
+      "<[COMMA_S_medium]-1>"
+    ]
+  ],
+  "<[COMMA_S_medium]>": [
+    [
+      ", ",
+      "<Ss>",
+      " ",
+      "<medium>"
+    ]
+  ],
+  "<medium>": [
+    [
+      "<IDENT>",
+      " ",
+      "<Ss>"
+    ]
+  ],
+  "<page>": [
+    [
+      "<PAGE_SYM>",
+      " ",
+      "<Ss>",
+      " ",
+      "<pseudo_page-1>",
+      " { ",
+      "<Ss>",
+      " ",
+      "<declaration-1>",
+      " ",
+      "<[SEMI_S_declaration]-1>",
+      " } ",
+      "<Ss>"
+    ]
+  ],
+  "<[SEMI_S_declaration]>": [
+    [
+      "; ",
+      "<Ss>",
+      " ",
+      "<declaration-2>"
+    ]
+  ],
+  "<pseudo_page>": [
+    [
+      ": ",
+      "<IDENT>",
+      " ",
+      "<Ss>"
+    ]
+  ],
+  "<operator>": [
+    [
+      "/ ",
+      "<Ss>"
+    ],
+    [
+      ", ",
+      "<Ss>"
+    ]
+  ],
+  "<combinator>": [
+    [
+      "+ ",
+      "<Ss>"
+    ],
+    [
+      "> ",
+      "<Ss>"
+    ]
+  ],
+  "<unary_operator>": [
+    [
+      "-"
+    ],
+    [
+      "+"
+    ]
+  ],
+  "<property>": [
+    [
+      "<IDENT>",
+      " ",
+      "<Ss>"
+    ]
+  ],
+  "<ruleset>": [
+    [
+      "<selector>",
+      " ",
+      "<COMMA_S_selector-1>",
+      " { ",
+      "<Ss>",
+      " ",
+      "<declaration-3>",
+      " ",
+      "<[SEMI_S_declaration]-2>",
+      " } ",
+      "<Ss>"
+    ]
+  ],
+  "<COMMA_S_selector>": [
+    [
+      ", ",
+      "<Ss>",
+      " selector"
+    ]
+  ],
+  "<selector>": [
+    [
+      "<simple_selector>",
+      " ",
+      "<[combinator_selector_OR_S]-1>"
+    ]
+  ],
+  "<[combinator_selector]>": [
+    [
+      "<combinator-1>",
+      " ",
+      "<selector>"
+    ]
+  ],
+  "<[combinator_selector_OR_S]>": [
+    [
+      "<combinator>",
+      " ",
+      "<selector>"
+    ],
+    [
+      "<Sp>",
+      " ",
+      "<[combinator_selector]-1>"
+    ]
+  ],
+  "<simple_selector>": [
+    [
+      "<element_name>",
+      " ",
+      "<[HASH_OR_class_OR_attrib_OR_pseudo]-1>"
+    ],
+    [
+      "<[HASH_OR_class_OR_attrib_OR_pseudo]-2>"
+    ]
+  ],
+  "<[HASH_OR_class_OR_attrib_OR_pseudo]>": [
+    [
+      "<HASH>"
+    ],
+    [
+      "<class>"
+    ],
+    [
+      "<attrib>"
+    ],
+    [
+      "<pseudo>"
+    ]
+  ],
+  "<class>": [
+    [
+      ".",
+      "<IDENT>"
+    ]
+  ],
+  "<element_name>": [
+    [
+      "<IDENT>"
+    ],
+    [
+      "*"
+    ]
+  ],
+  "<attrib>": [
+    [
+      "[ ",
+      "<Ss>",
+      " ",
+      "<IDENT>",
+      " ",
+      "<Ss>",
+      " ",
+      "<[attrib_GROUPING]-1>",
+      " ]"
+    ]
+  ],
+  "<[EQUAL_OR_INCLUDES_OR_DASHMATCH]>": [
+    [
+      "="
+    ],
+    [
+      "<INCLUDES>"
+    ],
+    [
+      "<DASHMATCH>"
+    ]
+  ],
+  "<[IDENT_OR_STRING]>": [
+    [
+      "<IDENT>"
+    ],
+    [
+      "<STRING>"
+    ]
+  ],
+  "<[attrib_GROUPING]>": [
+    [
+      "<[EQUAL_OR_INCLUDES_OR_DASHMATCH]>",
+      " ",
+      "<Ss>",
+      " ",
+      "<[IDENT_OR_STRING]>",
+      " ",
+      "<Ss>"
+    ]
+  ],
+  "<pseudo>": [
+    [
+      ": ",
+      "<[IDENT_OR_FUNCTION]>"
+    ]
+  ],
+  "<[IDENT_OR_FUNCTION]>": [
+    [
+      "<IDENT>"
+    ],
+    [
+      "<FUNCTION>",
+      " ",
+      "<Ss>",
+      " ",
+      "<[IDENT_S]-1>",
+      " )"
+    ]
+  ],
+  "<[IDENT_S]>": [
+    [
+      "<IDENT>",
+      " ",
+      "<Ss>"
+    ]
+  ],
+  "<declaration>": [
+    [
+      "<property>",
+      " : ",
+      "<Ss>",
+      " ",
+      "<expr>",
+      " ",
+      "<prio-1>"
+    ]
+  ],
+  "<prio>": [
+    [
+      "<IMPORT_SYM>",
+      " ",
+      "<Ss>"
+    ]
+  ],
+  "<expr>": [
+    [
+      "<term>",
+      " ",
+      "<[operator_term]-1>"
+    ]
+  ],
+  "<[operator_term]>": [
+    [
+      "<operator-1>",
+      " ",
+      "<term>"
+    ]
+  ],
+  "<term>": [
+    [
+      "<unary_operator-1>",
+      " ",
+      "<[term_GROUPING]>"
+    ],
+    [
+      "<STRING>",
+      " ",
+      "<Ss>"
+    ],
+    [
+      "<IDENT>",
+      " ",
+      "<Ss>"
+    ],
+    [
+      "<URI>",
+      " ",
+      "<Ss>"
+    ],
+    [
+      "<hexcolor>"
+    ],
+    [
+      "<function>"
+    ]
+  ],
+  "<[term_GROUPING]>": [
+    [
+      "<NUMBER>",
+      " ",
+      "<Ss>"
+    ],
+    [
+      "<PERCENTAGE>",
+      " ",
+      "<Ss>"
+    ],
+    [
+      "<LENGTH>",
+      " ",
+      "<Ss>"
+    ],
+    [
+      "<EMS>",
+      " ",
+      "<Ss>"
+    ],
+    [
+      "<EXS>",
+      " ",
+      "<Ss>"
+    ],
+    [
+      "<ANGLE>",
+      " ",
+      "<Ss>"
+    ],
+    [
+      "<TIME>",
+      " ",
+      "<Ss>"
+    ],
+    [
+      "<FREQ>",
+      " ",
+      "<Ss>"
+    ]
+  ],
+  "<function>": [
+    [
+      "<FUNCTION>",
+      " ",
+      "<Ss>",
+      " ",
+      "<expr>",
+      " ) ",
+      "<Ss>"
+    ]
+  ],
+  "<hexcolor>": [
+    [
+      "#",
+      "<[three_char_HEX]>",
+      " ",
+      "<Ss>"
+    ],
+    [
+      "#",
+      "<[six_char_HEX]>",
+      " ",
+      "<Ss>"
+    ]
+  ],
+  "<[three_char_HEX]>": [
+    [
+      "<HEX_CHAR>",
+      "<HEX_CHAR>",
+      "<HEX_CHAR>"
+    ]
+  ],
+  "<[six_char_HEX]>": [
+    [
+      "<HEX_CHAR>",
+      "<HEX_CHAR>",
+      "<HEX_CHAR>",
+      "<HEX_CHAR>",
+      "<HEX_CHAR>",
+      "<HEX_CHAR>"
+    ]
+  ],
+  "<HEX_CHAR>": [
+    [
+      "0"
+    ],
+    [
+      "1"
+    ],
+    [
+      "2"
+    ],
+    [
+      "3"
+    ],
+    [
+      "4"
+    ],
+    [
+      "5"
+    ],
+    [
+      "6"
+    ],
+    [
+      "7"
+    ],
+    [
+      "8"
+    ],
+    [
+      "9"
+    ],
+    [
+      "a"
+    ],
+    [
+      "b"
+    ],
+    [
+      "c"
+    ],
+    [
+      "d"
+    ],
+    [
+      "e"
+    ],
+    [
+      "f"
+    ]
+  ],
+  "<Sp>": [
+    [
+      "<WHITESPACE-1>"
+    ]
+  ],
+  "<Ss>": [
+    [
+      "<WHITESPACE-2>"
+    ]
+  ],
+  "<So>": [
+    [],
+    [
+      "<WHITESPACE>"
+    ]
+  ],
+  "<CDO>": [
+    [
+      "<!--"
+    ]
+  ],
+  "<CDC>": [
+    [
+      "-->"
+    ]
+  ],
+  "<INCLUDES>": [
+    [
+      "~="
+    ]
+  ],
+  "<DASHMATCH>": [
+    [
+      "|="
+    ]
+  ],
+  "<STRING>": [
+    [
+      "<string1>"
+    ],
+    [
+      "<string2>"
+    ]
+  ],
+  "<IDENT>": [
+    [
+      "<{ident}>"
+    ]
+  ],
+  "<HASH>": [
+    [
+      "#",
+      "<{name}>"
+    ]
+  ],
+  "<IMPORT_SYM>": [
+    [
+      "@import"
+    ]
+  ],
+  "<PAGE_SYM>": [
+    [
+      "@page"
+    ]
+  ],
+  "<MEDIA_SYM>": [
+    [
+      "@media"
+    ]
+  ],
+  "<CHARSET_SYM>": [
+    [
+      "@charset"
+    ]
+  ],
+  "<EMS>": [
+    [
+      "<{num}>",
+      "em"
+    ]
+  ],
+  "<EXS>": [
+    [
+      "<{num}>",
+      "ex"
+    ]
+  ],
+  "<LENGTH>": [
+    [
+      "<{num}>",
+      "px"
+    ],
+    [
+      "<{num}>",
+      "cm"
+    ],
+    [
+      "<{num}>",
+      "mm"
+    ],
+    [
+      "<{num}>",
+      "in"
+    ],
+    [
+      "<{num}>",
+      "pt"
+    ],
+    [
+      "<{num}>",
+      "pc"
+    ]
+  ],
+  "<ANGLE>": [
+    [
+      "<{num}>",
+      "deg"
+    ],
+    [
+      "<{num}>",
+      "rad"
+    ],
+    [
+      "<{num}>",
+      "grad"
+    ]
+  ],
+  "<TIME>": [
+    [
+      "<{num}>",
+      "ms"
+    ],
+    [
+      "<{num}>",
+      "s"
+    ]
+  ],
+  "<FREQ>": [
+    [
+      "<{num}>",
+      "hz"
+    ],
+    [
+      "<{num}>",
+      "khz"
+    ]
+  ],
+  "<PERCENTAGE>": [
+    [
+      "<{num}>",
+      "%"
+    ]
+  ],
+  "<NUMBER>": [
+    [
+      "<{num}>"
+    ]
+  ],
+  "<URI>": [
+    [
+      "url(\"",
+      "<So>",
+      "<url>",
+      "<So>",
+      "\")"
+    ],
+    [
+      "url(\"",
+      "<So>",
+      "<STRING>",
+      "<So>",
+      "\")"
+    ]
+  ],
+  "<url>": [
+    [
+      "<url_-1>"
+    ]
+  ],
+  "<url_>": [
+    [
+      "!"
+    ],
+    [
+      "#"
+    ],
+    [
+      "$"
+    ],
+    [
+      "%"
+    ],
+    [
+      "&"
+    ],
+    [
+      "*"
+    ],
+    [
+      "-"
+    ],
+    [
+      "~"
+    ],
+    [
+      "<escape>"
+    ]
+  ],
+  "<FUNCTION>": [
+    [
+      "<{ident}>",
+      "("
+    ]
+  ],
+  "<string1>": [
+    [
+      "\"",
+      "<qmychars1-1>",
+      "\""
+    ]
+  ],
+  "<string2>": [
+    [
+      "'",
+      "<qmychars2-1>",
+      "'"
+    ]
+  ],
+  "<qnonl1>": [
+    [
+      "7"
+    ],
+    [
+      "Q"
+    ],
+    [
+      "J"
+    ],
+    [
+      "@"
+    ],
+    [
+      "2"
+    ],
+    [
+      "g"
+    ],
+    [
+      "\t"
+    ],
+    [
+      "X"
+    ],
+    [
+      "`"
+    ],
+    [
+      "G"
+    ],
+    [
+      "e"
+    ],
+    [
+      "["
+    ],
+    [
+      "?"
+    ],
+    [
+      "v"
+    ],
+    [
+      "$"
+    ],
+    [
+      "j"
+    ],
+    [
+      "K"
+    ],
+    [
+      "d"
+    ],
+    [
+      "A"
+    ],
+    [
+      "n"
+    ],
+    [
+      "h"
+    ],
+    [
+      "l"
+    ],
+    [
+      "4"
+    ],
+    [
+      "D"
+    ],
+    [
+      "a"
+    ],
+    [
+      "#"
+    ],
+    [
+      "f"
+    ],
+    [
+      "y"
+    ],
+    [
+      "B"
+    ],
+    [
+      "U"
+    ],
+    [
+      "P"
+    ],
+    [
+      "3"
+    ],
+    [
+      "O"
+    ],
+    [
+      "S"
+    ],
+    [
+      ")"
+    ],
+    [
+      " "
+    ],
+    [
+      "W"
+    ],
+    [
+      "o"
+    ],
+    [
+      "b"
+    ],
+    [
+      "|"
+    ],
+    [
+      "q"
+    ],
+    [
+      "L"
+    ],
+    [
+      "]"
+    ],
+    [
+      "V"
+    ],
+    [
+      "*"
+    ],
+    [
+      "z"
+    ],
+    [
+      "}"
+    ],
+    [
+      "6"
+    ],
+    [
+      "u"
+    ],
+    [
+      "^"
+    ],
+    [
+      ","
+    ],
+    [
+      "N"
+    ],
+    [
+      ">"
+    ],
+    [
+      "+"
+    ],
+    [
+      "Y"
+    ],
+    [
+      "t"
+    ],
+    [
+      "k"
+    ],
+    [
+      "!"
+    ],
+    [
+      "p"
+    ],
+    [
+      "Z"
+    ],
+    [
+      "E"
+    ],
+    [
+      "("
+    ],
+    [
+      "\\"
+    ],
+    [
+      "<"
+    ],
+    [
+      "F"
+    ],
+    [
+      "%"
+    ],
+    [
+      "9"
+    ],
+    [
+      "0"
+    ],
+    [
+      "s"
+    ],
+    [
+      ";"
+    ],
+    [
+      "&"
+    ],
+    [
+      "C"
+    ],
+    [
+      "T"
+    ],
+    [
+      "r"
+    ],
+    [
+      "5"
+    ],
+    [
+      "R"
+    ],
+    [
+      "'"
+    ],
+    [
+      "_"
+    ],
+    [
+      "."
+    ],
+    [
+      "8"
+    ],
+    [
+      "H"
+    ],
+    [
+      "i"
+    ],
+    [
+      "/"
+    ],
+    [
+      "M"
+    ],
+    [
+      "~"
+    ],
+    [
+      "{"
+    ],
+    [
+      ":"
+    ],
+    [
+      "c"
+    ],
+    [
+      "I"
+    ],
+    [
+      "-"
+    ],
+    [
+      "\u000b"
+    ],
+    [
+      "1"
+    ],
+    [
+      "w"
+    ],
+    [
+      "x"
+    ],
+    [
+      "m"
+    ],
+    [
+      "="
+    ]
+  ],
+  "<qnonl2>": [
+    [
+      "7"
+    ],
+    [
+      "Q"
+    ],
+    [
+      "J"
+    ],
+    [
+      "@"
+    ],
+    [
+      "2"
+    ],
+    [
+      "g"
+    ],
+    [
+      "\t"
+    ],
+    [
+      "X"
+    ],
+    [
+      "`"
+    ],
+    [
+      "G"
+    ],
+    [
+      "e"
+    ],
+    [
+      "["
+    ],
+    [
+      "?"
+    ],
+    [
+      "v"
+    ],
+    [
+      "$"
+    ],
+    [
+      "j"
+    ],
+    [
+      "K"
+    ],
+    [
+      "d"
+    ],
+    [
+      "A"
+    ],
+    [
+      "n"
+    ],
+    [
+      "h"
+    ],
+    [
+      "l"
+    ],
+    [
+      "4"
+    ],
+    [
+      "D"
+    ],
+    [
+      "a"
+    ],
+    [
+      "#"
+    ],
+    [
+      "f"
+    ],
+    [
+      "y"
+    ],
+    [
+      "B"
+    ],
+    [
+      "U"
+    ],
+    [
+      "P"
+    ],
+    [
+      "3"
+    ],
+    [
+      "O"
+    ],
+    [
+      "S"
+    ],
+    [
+      ")"
+    ],
+    [
+      " "
+    ],
+    [
+      "W"
+    ],
+    [
+      "o"
+    ],
+    [
+      "b"
+    ],
+    [
+      "|"
+    ],
+    [
+      "q"
+    ],
+    [
+      "L"
+    ],
+    [
+      "]"
+    ],
+    [
+      "V"
+    ],
+    [
+      "*"
+    ],
+    [
+      "z"
+    ],
+    [
+      "}"
+    ],
+    [
+      "6"
+    ],
+    [
+      "u"
+    ],
+    [
+      "^"
+    ],
+    [
+      ","
+    ],
+    [
+      "N"
+    ],
+    [
+      ">"
+    ],
+    [
+      "+"
+    ],
+    [
+      "Y"
+    ],
+    [
+      "t"
+    ],
+    [
+      "k"
+    ],
+    [
+      "!"
+    ],
+    [
+      "p"
+    ],
+    [
+      "Z"
+    ],
+    [
+      "E"
+    ],
+    [
+      "("
+    ],
+    [
+      "\\"
+    ],
+    [
+      "<"
+    ],
+    [
+      "F"
+    ],
+    [
+      "%"
+    ],
+    [
+      "9"
+    ],
+    [
+      "0"
+    ],
+    [
+      "s"
+    ],
+    [
+      ";"
+    ],
+    [
+      "&"
+    ],
+    [
+      "C"
+    ],
+    [
+      "T"
+    ],
+    [
+      "r"
+    ],
+    [
+      "5"
+    ],
+    [
+      "\""
+    ],
+    [
+      "R"
+    ],
+    [
+      "_"
+    ],
+    [
+      "."
+    ],
+    [
+      "8"
+    ],
+    [
+      "H"
+    ],
+    [
+      "i"
+    ],
+    [
+      "/"
+    ],
+    [
+      "M"
+    ],
+    [
+      "~"
+    ],
+    [
+      "{"
+    ],
+    [
+      ":"
+    ],
+    [
+      "c"
+    ],
+    [
+      "I"
+    ],
+    [
+      "-"
+    ],
+    [
+      "\u000b"
+    ],
+    [
+      "1"
+    ],
+    [
+      "w"
+    ],
+    [
+      "x"
+    ],
+    [
+      "m"
+    ],
+    [
+      "="
+    ]
+  ],
+  "<qmychars1>": [
+    [
+      "<qnonl1>"
+    ],
+    [
+      "\\",
+      "<nl>"
+    ],
+    [
+      "<escape>"
+    ]
+  ],
+  "<qmychars2>": [
+    [
+      "<qnonl2>"
+    ],
+    [
+      "\\",
+      "<nl>"
+    ],
+    [
+      "<escape>"
+    ]
+  ],
+  "<nl>": [
+    [
+      "\r"
+    ],
+    [
+      "\n"
+    ],
+    [
+      "\f"
+    ],
+    [
+      "\r\n"
+    ]
+  ],
+  "<escape>": [
+    [
+      "\\",
+      "<echar>"
+    ]
+  ],
+  "<echar>": [
+    [
+      "Q"
+    ],
+    [
+      "J"
+    ],
+    [
+      "@"
+    ],
+    [
+      "g"
+    ],
+    [
+      "\t"
+    ],
+    [
+      "X"
+    ],
+    [
+      "`"
+    ],
+    [
+      "G"
+    ],
+    [
+      "["
+    ],
+    [
+      "?"
+    ],
+    [
+      "v"
+    ],
+    [
+      "$"
+    ],
+    [
+      "j"
+    ],
+    [
+      "K"
+    ],
+    [
+      "A"
+    ],
+    [
+      "n"
+    ],
+    [
+      "h"
+    ],
+    [
+      "l"
+    ],
+    [
+      "D"
+    ],
+    [
+      "#"
+    ],
+    [
+      "y"
+    ],
+    [
+      "B"
+    ],
+    [
+      "U"
+    ],
+    [
+      "P"
+    ],
+    [
+      "O"
+    ],
+    [
+      "S"
+    ],
+    [
+      ")"
+    ],
+    [
+      " "
+    ],
+    [
+      "W"
+    ],
+    [
+      "o"
+    ],
+    [
+      "|"
+    ],
+    [
+      "q"
+    ],
+    [
+      "L"
+    ],
+    [
+      "]"
+    ],
+    [
+      "V"
+    ],
+    [
+      "*"
+    ],
+    [
+      "z"
+    ],
+    [
+      "}"
+    ],
+    [
+      "u"
+    ],
+    [
+      "^"
+    ],
+    [
+      ","
+    ],
+    [
+      "N"
+    ],
+    [
+      ">"
+    ],
+    [
+      "+"
+    ],
+    [
+      "Y"
+    ],
+    [
+      "t"
+    ],
+    [
+      "k"
+    ],
+    [
+      "!"
+    ],
+    [
+      "p"
+    ],
+    [
+      "Z"
+    ],
+    [
+      "E"
+    ],
+    [
+      "("
+    ],
+    [
+      "\\"
+    ],
+    [
+      "<"
+    ],
+    [
+      "F"
+    ],
+    [
+      "%"
+    ],
+    [
+      "s"
+    ],
+    [
+      ";"
+    ],
+    [
+      "&"
+    ],
+    [
+      "C"
+    ],
+    [
+      "T"
+    ],
+    [
+      "r"
+    ],
+    [
+      "\""
+    ],
+    [
+      "R"
+    ],
+    [
+      "'"
+    ],
+    [
+      "_"
+    ],
+    [
+      "."
+    ],
+    [
+      "H"
+    ],
+    [
+      "i"
+    ],
+    [
+      "/"
+    ],
+    [
+      "M"
+    ],
+    [
+      "~"
+    ],
+    [
+      "{"
+    ],
+    [
+      ":"
+    ],
+    [
+      "I"
+    ],
+    [
+      "-"
+    ],
+    [
+      "\u000b"
+    ],
+    [
+      "w"
+    ],
+    [
+      "x"
+    ],
+    [
+      "m"
+    ],
+    [
+      "="
+    ]
+  ],
+  "<{ident}>": [
+    [
+      "<minus-1>",
+      "<nmstart>",
+      "<nmchar-1>"
+    ]
+  ],
+  "<nmstart>": [
+    [
+      "a"
+    ],
+    [
+      "b"
+    ],
+    [
+      "c"
+    ],
+    [
+      "d"
+    ],
+    [
+      "e"
+    ],
+    [
+      "f"
+    ],
+    [
+      "g"
+    ],
+    [
+      "h"
+    ],
+    [
+      "i"
+    ],
+    [
+      "j"
+    ],
+    [
+      "k"
+    ],
+    [
+      "l"
+    ],
+    [
+      "m"
+    ],
+    [
+      "n"
+    ],
+    [
+      "o"
+    ],
+    [
+      "p"
+    ],
+    [
+      "q"
+    ],
+    [
+      "r"
+    ],
+    [
+      "s"
+    ],
+    [
+      "t"
+    ],
+    [
+      "u"
+    ],
+    [
+      "v"
+    ],
+    [
+      "w"
+    ],
+    [
+      "x"
+    ],
+    [
+      "y"
+    ],
+    [
+      "z"
+    ],
+    [
+      "<escape>"
+    ],
+    [
+      "_"
+    ]
+  ],
+  "<nmchar>": [
+    [
+      "a"
+    ],
+    [
+      "b"
+    ],
+    [
+      "c"
+    ],
+    [
+      "d"
+    ],
+    [
+      "e"
+    ],
+    [
+      "f"
+    ],
+    [
+      "g"
+    ],
+    [
+      "h"
+    ],
+    [
+      "i"
+    ],
+    [
+      "j"
+    ],
+    [
+      "k"
+    ],
+    [
+      "l"
+    ],
+    [
+      "m"
+    ],
+    [
+      "n"
+    ],
+    [
+      "o"
+    ],
+    [
+      "p"
+    ],
+    [
+      "q"
+    ],
+    [
+      "r"
+    ],
+    [
+      "s"
+    ],
+    [
+      "t"
+    ],
+    [
+      "u"
+    ],
+    [
+      "v"
+    ],
+    [
+      "w"
+    ],
+    [
+      "x"
+    ],
+    [
+      "y"
+    ],
+    [
+      "z"
+    ],
+    [
+      "0"
+    ],
+    [
+      "1"
+    ],
+    [
+      "2"
+    ],
+    [
+      "3"
+    ],
+    [
+      "4"
+    ],
+    [
+      "5"
+    ],
+    [
+      "6"
+    ],
+    [
+      "7"
+    ],
+    [
+      "8"
+    ],
+    [
+      "9"
+    ],
+    [
+      "<escape>"
+    ],
+    [
+      "_"
+    ],
+    [
+      "-"
+    ]
+  ],
+  "<minus>": [
+    [
+      "-"
+    ]
+  ],
+  "<{name}>": [
+    [
+      "<nmchar-2>"
+    ]
+  ],
+  "<{num}>": [
+    [
+      "<INTEGER>"
+    ]
+  ],
+  "<WHITESPACE>": [
+    [
+      " "
+    ],
+    [
+      "\t"
+    ]
+  ],
+  "<INTEGER>": [
+    [
+      "<DIGIT>",
+      "<INTEGER>"
+    ],
+    [
+      "<DIGIT>"
+    ]
+  ],
+  "<DIGIT>": [
+    [
+      "0"
+    ],
+    [
+      "1"
+    ],
+    [
+      "2"
+    ],
+    [
+      "3"
+    ],
+    [
+      "4"
+    ],
+    [
+      "5"
+    ],
+    [
+      "6"
+    ],
+    [
+      "7"
+    ],
+    [
+      "8"
+    ],
+    [
+      "9"
+    ]
+  ],
+  "<[CHARSET_SYM_STRING_SEMI]-1>": [
+    [],
+    [
+      "<[CHARSET_SYM_STRING_SEMI]>"
+    ]
+  ],
+  "<[S_OR_CDO_OR_CDC]-1>": [
+    [],
+    [
+      "<[S_OR_CDO_OR_CDC]>",
+      "<[S_OR_CDO_OR_CDC]-1>"
+    ]
+  ],
+  "<[import_CDO_S_OR_CDC_S]-1>": [
+    [],
+    [
+      "<[import_CDO_S_OR_CDC_S]>",
+      "<[import_CDO_S_OR_CDC_S]-1>"
+    ]
+  ],
+  "<[stylesheet_closing_GROUPING]-1>": [
+    [],
+    [
+      "<[stylesheet_closing_GROUPING]>",
+      "<[stylesheet_closing_GROUPING]-1>"
+    ]
+  ],
+  "<[CDO_S_OR_CDC_S]-1>": [
+    [],
+    [
+      "<[CDO_S_OR_CDC_S]>",
+      "<[CDO_S_OR_CDC_S]-1>"
+    ]
+  ],
+  "<[CDO_S_OR_CDC_S]-2>": [
+    [],
+    [
+      "<[CDO_S_OR_CDC_S]>",
+      "<[CDO_S_OR_CDC_S]-2>"
+    ]
+  ],
+  "<media_list-1>": [
+    [],
+    [
+      "<media_list>"
+    ]
+  ],
+  "<ruleset-1>": [
+    [],
+    [
+      "<ruleset>",
+      "<ruleset-1>"
+    ]
+  ],
+  "<[COMMA_S_medium]-1>": [
+    [],
+    [
+      "<[COMMA_S_medium]>",
+      "<[COMMA_S_medium]-1>"
+    ]
+  ],
+  "<pseudo_page-1>": [
+    [],
+    [
+      "<pseudo_page>"
+    ]
+  ],
+  "<declaration-1>": [
+    [],
+    [
+      "<declaration>"
+    ]
+  ],
+  "<[SEMI_S_declaration]-1>": [
+    [],
+    [
+      "<[SEMI_S_declaration]>",
+      "<[SEMI_S_declaration]-1>"
+    ]
+  ],
+  "<declaration-2>": [
+    [],
+    [
+      "<declaration>"
+    ]
+  ],
+  "<COMMA_S_selector-1>": [
+    [],
+    [
+      "<COMMA_S_selector>",
+      "<COMMA_S_selector-1>"
+    ]
+  ],
+  "<declaration-3>": [
+    [],
+    [
+      "<declaration>"
+    ]
+  ],
+  "<[SEMI_S_declaration]-2>": [
+    [],
+    [
+      "<[SEMI_S_declaration]>",
+      "<[SEMI_S_declaration]-2>"
+    ]
+  ],
+  "<[combinator_selector_OR_S]-1>": [
+    [],
+    [
+      "<[combinator_selector_OR_S]>"
+    ]
+  ],
+  "<combinator-1>": [
+    [],
+    [
+      "<combinator>"
+    ]
+  ],
+  "<[combinator_selector]-1>": [
+    [],
+    [
+      "<[combinator_selector]>"
+    ]
+  ],
+  "<[HASH_OR_class_OR_attrib_OR_pseudo]-1>": [
+    [],
+    [
+      "<[HASH_OR_class_OR_attrib_OR_pseudo]>",
+      "<[HASH_OR_class_OR_attrib_OR_pseudo]-1>"
+    ]
+  ],
+  "<[HASH_OR_class_OR_attrib_OR_pseudo]-2>": [
+    [
+      "<[HASH_OR_class_OR_attrib_OR_pseudo]>"
+    ],
+    [
+      "<[HASH_OR_class_OR_attrib_OR_pseudo]>",
+      "<[HASH_OR_class_OR_attrib_OR_pseudo]-2>"
+    ]
+  ],
+  "<[attrib_GROUPING]-1>": [
+    [],
+    [
+      "<[attrib_GROUPING]>"
+    ]
+  ],
+  "<[IDENT_S]-1>": [
+    [],
+    [
+      "<[IDENT_S]>"
+    ]
+  ],
+  "<prio-1>": [
+    [],
+    [
+      "<prio>"
+    ]
+  ],
+  "<[operator_term]-1>": [
+    [],
+    [
+      "<[operator_term]>",
+      "<[operator_term]-1>"
+    ]
+  ],
+  "<operator-1>": [
+    [],
+    [
+      "<operator>"
+    ]
+  ],
+  "<unary_operator-1>": [
+    [],
+    [
+      "<unary_operator>"
+    ]
+  ],
+  "<WHITESPACE-1>": [
+    [
+      "<WHITESPACE>"
+    ],
+    [
+      "<WHITESPACE>",
+      "<WHITESPACE-1>"
+    ]
+  ],
+  "<WHITESPACE-2>": [
+    [],
+    [
+      "<WHITESPACE>",
+      "<WHITESPACE-2>"
+    ]
+  ],
+  "<url_-1>": [
+    [],
+    [
+      "<url_>",
+      "<url_-1>"
+    ]
+  ],
+  "<qmychars1-1>": [
+    [],
+    [
+      "<qmychars1>",
+      "<qmychars1-1>"
+    ]
+  ],
+  "<qmychars2-1>": [
+    [],
+    [
+      "<qmychars2>",
+      "<qmychars2-1>"
+    ]
+  ],
+  "<minus-1>": [
+    [],
+    [
+      "<minus>"
+    ]
+  ],
+  "<nmchar-1>": [
+    [],
+    [
+      "<nmchar>",
+      "<nmchar-1>"
+    ]
+  ],
+  "<nmchar-2>": [
+    [
+      "<nmchar>"
+    ],
+    [
+      "<nmchar>",
+      "<nmchar-2>"
+    ]
+  ]
+}

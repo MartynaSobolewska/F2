@@ -6,12 +6,27 @@ extern crate core;
 
 use std::cell::Cell;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet, VecDeque};
+// use std::collections::btree_map::BTreeMap;
+// use std::collections::btree_set::BTreeSet;
+// use std::collections::vec_deque::VecDeque;
 use serde::{Deserialize, Serialize};
 use log::{info, warn};
 use std::fmt::Write;
 use std::path::Path;
+use std::process::Command;
 use std::string::String;
+use std::time::Instant;
 use rand::Rng;
+
+/// If this is `true` then the output file we generate will not emit any
+/// unsafe code. I'm not aware of any bugs with the unsafe code that I use and
+/// thus this is by default set to `false`. Feel free to set it to `true` if
+/// you are concerned. - Gamozolabs (https://github.com/gamozolabs/fzero_fuzzer/blob/master)
+const SAFE_ONLY: bool = true;
+
+/// If this is true, the fuzzer will never stop unwrapping elements once the max_depth is reached,
+/// leading to full completeness of the outputs but lower throughput
+const FULL_CORRECTNESS: bool = true;
 
 // Json representation of the data struct
 #[derive(Serialize, Deserialize, Debug, Default)]
@@ -55,49 +70,64 @@ struct Grammar {
 impl Grammar {
     fn new(grammar_json: &GrammarJson) -> Self {
         let mut grammar = Grammar::default();
-
         grammar.start = String::from("<start>");
-
         // allocate all non-terminals
-        for (f_name, _) in &grammar_json.0 {
+        for (f_name, _) in grammar_json.0.iter() {
+            // if already in grammar, throw an error
             if grammar.name_to_fragment.contains_key(f_name) {
                 panic!("{} fragment declaration repeats in grammar.", f_name);
             }
-            // allocate a new empty fragment
+            // else - allocate a new empty fragment
             let fragment_id = grammar.allocate_fragment(
                 Fragment::NonTerminal(
                     Vec::new(), Vec::new(), 0, Vec::new()));
-            debug!("Allocated non-term {} with id {:?}", f_name, fragment_id);
 
+            // save fname-id relation in the map
             grammar.name_to_fragment.insert(
                 f_name.clone(),
                 fragment_id,
             );
         }
 
-        // check if grammar contains the start token
+        //check if grammar contains the start token
         if !grammar.name_to_fragment.contains_key(&*grammar.start) {
             panic!("Grammar does not contain the \"<start>\" fragment.")
         }
 
-        // traverse the grammar to create the data structure
-        for (f_name, f_options) in &grammar_json.0 {
-            // all options for a fragment and their probabilities
-            let mut options = Vec::new();
-            let mut probabilities = Vec::new();
-            let mut probabilities_sum : usize = 0;
+        for (f_name, options) in grammar_json.0.iter() {
+            // get non-term id
+            let f_id = grammar.name_to_fragment[f_name];
 
-            // for each option - wrapped as expression due to json formatting
-            for expression in f_options {
+            // store all the options for non-terminal
+            let mut expressions = Vec::new();
+            // keep track of probabilities for different options
+            let mut probabilities = Vec::new();
+            // a flag to indicate if some option has a non-default probability
+            let mut some_probabilities = false;
+
+            // iterate through options (expressions)
+            for option in options {
+                // all terms (chronological in current expression)
+                let mut terms = Vec::new();
+
+                // check if there is a probability
+                //probability of current expression being chosen
                 let mut probability: Option<usize> = None;
 
-                // check if it has a probability
-                match expression.last() {
+                let mut option_without_prob = option.clone();
+
+                // check if current fragment has a probability
+                match option.last() {
                     Some(str) => {
                         if str.starts_with("p=") {
                             let num = String::from(&str[2..]).parse::<u32>();
                             match num {
-                                Ok(ok) => { probability = Some(ok as usize); }
+                                Ok(ok) => {
+                                    probability = Some(ok as usize);
+                                    // get rid of probability field
+                                    option_without_prob.pop();
+                                    some_probabilities = true;
+                                }
                                 Err(_) => {
                                     panic!(
                                         "A fragment {} contains an option with badly formatted probability field!"
@@ -107,133 +137,122 @@ impl Grammar {
                             }
                         }
                     }
-                    None => {}
+                    None => {
+                        // no children
+                    }
                 }
 
-                let mut subfragments: Vec<FragmentId> = Vec::new();
-
-                // don't iterate through probability as a term in expression
-                let iter = if probability.is_some() { expression.len() - 1 } else { expression.len() };
-                // default probability - 1
+                //default probability - 1
                 probability = if probability.is_some() { probability } else { Some(1) };
-                probabilities_sum += if probability.is_some() {probability.unwrap()} else { 0 };
+                // probability should never be 0
+                if probability == Some(0) {
+                    panic!("Fragment {} contains a child with a zero probability!", f_name);
+                }
+
                 probabilities.push(probability.unwrap());
 
-                // for each term in an expression
-                for index in 0..iter {
-                    let subfragment = expression.get(index).unwrap();
-                    let mut subfragment_id = FragmentId(0);
-
-                    // if non-term
-                    if subfragment.starts_with("<") {
-                        if subfragment.ends_with(">") {
-                            // if "<>", it must be a non-terminal with a corresponding body
-                            if !grammar.name_to_fragment.contains_key(subfragment) {
-                                panic!("subfragment {} in fragment {} is never defined.",
-                                       subfragment, f_name);
-                            } else {
-                                // stored non-terminal
-                                subfragment_id = *grammar.name_to_fragment.get(subfragment).unwrap();
-                            }
-                        }
+                for term in &option_without_prob {
+                    let mut term_id;
+                    // non-terminal
+                    if grammar.name_to_fragment.contains_key(term) {
+                        term_id = grammar.name_to_fragment[term];
+                    } else {
+                        // create a new terminal fragment
+                        term_id = grammar.allocate_fragment(
+                            Fragment::Terminal(term.as_bytes().to_vec()));
                     }
-
-                    // else - term
-                    else {
-                        if subfragment.is_empty() {
-                            // store empty terminal
-                            subfragment_id = grammar.allocate_fragment(
-                                Fragment::Nop);
-                            debug!("\t Added NOP {} to grammar", subfragment);
-                        }
-
-                        // store non-terminal
-                        if !grammar.name_to_fragment.contains_key(subfragment) {
-                            // store terminal
-                            subfragment_id = grammar.allocate_fragment(
-                                Fragment::Terminal(subfragment.as_bytes().to_vec()));
-                            debug!("\t Added terminal {} to grammar", subfragment);
-                        }
-                    }
-                    subfragments.push(subfragment_id);
+                    terms.push(term_id);
                 }
 
-                options.push(
-                    grammar.allocate_fragment(
-                        Fragment::Expression(subfragments, u32::MAX)
-                    ));
+                // allocate a new fragment with terms
+                expressions.push(grammar.allocate_fragment(
+                    Fragment::Expression(terms, u32::MAX)));
             }
 
-            let mut probability_fragments = Vec::new();
-            if probabilities_sum == probabilities.len(){
-                probability_fragments = options.clone();
-            }else {
-                println!("Probabilities in fragment {}!!!", f_name);
-                for (index, p) in probabilities.iter().enumerate(){
+            // change the contents of currently processed non-terminal
+            let non_term = &mut grammar.fragments[f_id.0];
+
+            // if some non-zero probabilities present, add the term that number of times
+            let mut expressions_with_probabilities = Vec::new();
+            if some_probabilities {
+                for (index, p) in probabilities.iter().enumerate() {
                     for _ in 0..*p {
-                        probability_fragments.push(options[index]);
+                        expressions_with_probabilities.push(expressions[index]);
                     }
                 }
+            } else {
+                expressions_with_probabilities = expressions.clone();
             }
-            // reallocate the updated version of the non-terminal with body onto the vector
-            grammar.reallocate_nonterm(
-                Fragment::NonTerminal(options, probability_fragments, u32::MAX,  Vec::new()),
-                f_name,
-            );
+
+            *non_term =
+                Fragment::NonTerminal(expressions,
+                                      expressions_with_probabilities, u32::MAX,
+                                      Vec::new());
+
         }
-
-        grammar.optimise();
-        grammar.find_steps();
-        grammar.optimise_stepcount();
-
         grammar
     }
 
-    fn find_steps(&mut self) -> u32 {
+    /**
+        finds the vector of next fragments to unwrap in order to achieve the shortest path
+    **/
+    fn find_steps(&mut self) {
         // think of the grammar as a connected graph, traverse each layer
         // depth first search to assign steps to terminal for each fragment
 
-        println!();
-        println!("*******************************************************************");
-        println!("*                               STEPS                             *");
-        println!("*******************************************************************");
-        println!();
+        debug!("*******************************************************************");
+        debug!("*                               STEPS                             *");
+        debug!("*******************************************************************\n");
 
-        // initially, start node
+        // initially stack only contains the start node
         let mut stack: VecDeque<FragmentId> = VecDeque::new();
         stack.push_back(*self.name_to_fragment.get(&self.start).unwrap());
 
         // nodes that pushed children onto stack
         let mut visited: HashSet<usize> = HashSet::new();
-        // pushed back because of a cycle
+        // nodes pushed back because of a cycle
         let mut pushed: HashSet<usize> = HashSet::new();
+
+        // keep track of number of inconclusive fragments for debug purposes
+        let mut inconclusive = 0;
 
         // traverse entire graph
         while !stack.is_empty() {
-            // debug!("STACK CONTAINS: {:?}", stack);
+            // get currently processed fragment
             let curr_id = stack.back().unwrap().0;
             let curr = self.fragments.get(curr_id).unwrap();
 
+            // if it has been visited, check if you can find its shortest or if it is in a cycle
             if visited.contains(&curr_id) {
-                // process visited nodes
                 stack.pop_back();
                 match curr {
-                    // for non-term - min+1 = min_steps
+                    // if non-term, min+1 = min_steps
+                    // all the fragments with steps min get pushed into shortest vector
                     Fragment::NonTerminal(options, probabilities, ..) => {
                         let mut min = u32::MAX;
                         let mut shortest = Vec::new();
+
+                        // find the options with least amount of steps
                         for o in options {
+                            // get the fragment
                             let option = self.fragments.get(o.0).unwrap();
                             match option {
+                                // terminal has steps = 1
                                 Fragment::Terminal(_) => {
+                                    // if new min, clear the shortest vector and add new shortest
                                     if min > 1 {
                                         min = 1;
                                         shortest.clear();
                                     }
-
-                                    shortest.push(*o);
+                                    // if min is 1, add option's id to shortest
+                                    if min == 1 {
+                                        shortest.push(*o);
+                                    }
                                 }
-                                Fragment::NonTerminal(_, _,  s, ..) => {
+                                // non-terminal has already computed steps (s),
+                                // if s = u32::MAX, it is in a loop
+                                // so it will never be the shortest option
+                                Fragment::NonTerminal(_, _, s, ..) => {
                                     if (*s) < min {
                                         min = *s + 1;
                                         shortest.clear();
@@ -242,6 +261,7 @@ impl Grammar {
                                         shortest.push(*o);
                                     }
                                 }
+                                // Expression similarly to non-term has precomputed steps s
                                 Fragment::Expression(_, s) => {
                                     if (*s) < min {
                                         min = *s + 1;
@@ -251,6 +271,7 @@ impl Grammar {
                                         shortest.push(*o);
                                     }
                                 }
+                                // Nop has steps 0, always shortest path
                                 Fragment::Nop => {
                                     if min > 0 {
                                         min = 0;
@@ -261,15 +282,17 @@ impl Grammar {
                                 }
                             }
                         }
-                        // if all children have cycles, push back
+                        // if all children have cycles, push back,
+                        // try to compute again once again later
                         if min == u32::MAX {
-                            // if it has already pushed back - inconclusive cycle
-                            // can't calculate min steps.
+                            // if it has already been pushed back before- inconclusive cycle
+                            // can't calculate min steps, else try one more time, add it to pushed.
                             if !pushed.contains(&curr_id) {
                                 stack.push_front(FragmentId(curr_id));
                                 pushed.insert(curr_id);
                             } else {
                                 debug!("No way to calculate the shortest for non-terminal: {}", curr_id);
+                                inconclusive += 1;
                                 // no way to calculate shortest so all options are
                                 self.fragments[curr_id] =
                                     Fragment::NonTerminal(options.clone(),
@@ -277,9 +300,13 @@ impl Grammar {
                                                           min,
                                                           options.clone())
                             }
-                        } else {
-                            debug!("Calculated shortest steps for non-terminal {}, steps: {}, no.of shortest: {}", curr_id, min, shortest.len());
-                            // self.print_fragment(FragmentId(curr_id));
+                        }
+                        // if min is not u32::MAX, shortest have been found.
+                        else {
+                            if shortest.len() == 0 {
+                                self.print_fragment(FragmentId(curr_id));
+                                panic!("HERE");
+                            }
                             self.fragments[curr_id] =
                                 Fragment::NonTerminal(options.clone(),
                                                       probabilities.clone(),
@@ -288,12 +315,14 @@ impl Grammar {
                         }
                     }
                     // for expression shortest path is sum of all children's shortest
+                    // so if any of the children is inconclusive, so will be the expression
                     Fragment::Expression(terms, mut _steps) => {
                         let mut min = 0;
-                        // if a child is dependent on a parent this will be true: cannot calculate minimum
+                        // if a child is dependent on a parent cannot calculate minimum
                         let mut uncalculated_child = false;
                         for t in terms {
                             let term = self.fragments.get(t.0).unwrap();
+                            // calculate the steps
                             match term {
                                 Fragment::Terminal(_) => min += 1,
                                 Fragment::NonTerminal(_, _, s, _) => {
@@ -314,7 +343,9 @@ impl Grammar {
                                 _ => {}
                             }
                         }
-                        min = if uncalculated_child { u32::MAX } else { min };
+
+                        // if one of the children is inconclusive,
+                        // try to compute expression again, later by pushing it to the end
                         if uncalculated_child {
                             min = u32::MAX;
                             if !pushed.contains(&curr_id) {
@@ -323,19 +354,22 @@ impl Grammar {
                             } else {
                                 // can't calculate min steps
                                 debug!("Can't calculate min_steps for expression {}", curr_id);
+                                inconclusive += 1;
                                 _steps = min;
                             }
                         } else {
                             _steps = min;
-                            debug!("Calculated min steps for expression {}: {}!", curr_id, min);
                         }
                     }
                     _ => {
                         warn!("encountered a Term while assigning steps.")
                     }
                 }
-            } else {
-                // if non-term or expression, push children
+            }
+            // if current has not been visited yet, push all non-term and expression children
+            // onto the stack to be processed first
+            else {
+                // if non-term or expression, push unvisited children
                 match curr {
                     Fragment::NonTerminal(fragments, ..) => {
                         visited.insert(curr_id);
@@ -371,67 +405,71 @@ impl Grammar {
         }
 
 
-        0
+        debug!("Found shortest paths for all possible fragments. \
+        {} fragments are in an inconclusive cycle.", inconclusive);
+        if inconclusive != 0 {
+            println!("Couldn't find shortest path for {} out of {} fragments. \
+            If the number is too large, consider rewriting a less recursive grammar.",
+                     inconclusive, self.fragments.len());
+        }
+        if inconclusive == self.fragments.len() {
+            panic!("Couldn't find shortest path for any fragment. Bad grammar formatting.");
+        }
+        println!();
     }
 
     fn optimise(&mut self) {
-        println!();
-        println!("*******************************************************************");
-        println!("*                        OPTIMISE GRAMMAR                         *");
-        println!("*******************************************************************");
-        println!();
+        debug!("*******************************************************************");
+        debug!("*                        OPTIMISE GRAMMAR                         *");
+        debug!("*******************************************************************\n");
+
+        // after the struct has been changed, there is maybe something left to optimise
+        // that was not detected before
+        let mut optimised = true;
+        let mut single_term_nonterms = 0;
+        let mut single_term_expressions = 0;
+        let mut NOPs = 0;
+
         // Keeps track of fragment identifiers which resolve to nops
         let mut nop_fragments = BTreeSet::new();
-
-        // Track if a optimization had an effect
-        let mut changed = true;
-        while changed {
-            // Start off assuming no effect from optimzation
-            changed = false;
+        while optimised {
+            optimised = false;
 
             // Go through each fragment, looking for potential optimizations
-            for idx in 0..self.fragments.len() {
-                // Clone the fragment such that we can inspect it, but we also
-                // can mutate it in place.
-                match self.fragments[idx].clone() {
+            for f_id in 0..self.fragments.len() {
+                match self.fragments[f_id].clone() {
                     Fragment::NonTerminal(options, ..) => {
-                        // If this non-terminal only has one option, replace
-                        // itself with the only option it resolves to
+                        // if only one option, no need for non-term, replace it with the option
                         if options.len() == 1 {
-                            self.fragments[idx] =
-                                self.fragments[options[0].0].clone();
-                            changed = true;
+                            self.fragments[f_id] = self.fragments[options[0].0].clone();
+                            optimised = true;
+                            single_term_nonterms += 1;
                         }
                     }
                     Fragment::Expression(expr, ..) => {
-                        // If this expression doesn't have anything to do at
-                        // all. Then simply replace it with a `Nop`
+                        // if no items in expression, turn it into a NOP
                         if expr.len() == 0 {
-                            self.fragments[idx] = Fragment::Nop;
-                            changed = true;
-
-                            // Track that this fragment identifier now resolves
-                            // to a nop
-                            nop_fragments.insert(idx);
+                            self.fragments[f_id] = Fragment::Nop;
+                            optimised = true;
+                            nop_fragments.insert(f_id);
+                            NOPs += 1;
                         }
 
-                        // If this expression only does one thing, then replace
-                        // the expression with the thing that it does.
+                        // if only one term in expression, replace it with the term
                         if expr.len() == 1 {
-                            self.fragments[idx] =
-                                self.fragments[expr[0].0].clone();
-                            changed = true;
+                            self.fragments[f_id] = self.fragments[expr[0].0].clone();
+                            optimised = true;
+                            single_term_expressions += 1;
                         }
 
-                        // Remove all `Nop`s from this expression, as they
-                        // wouldn't result in anything occuring.
+
                         if let Fragment::Expression(exprs, ..) =
-                        &mut self.fragments[idx] {
+                        &mut self.fragments[f_id] {
                             // Only retain fragments which are not nops
                             exprs.retain(|x| {
                                 if nop_fragments.contains(&x.0) {
                                     // Fragment was a nop, remove it
-                                    changed = true;
+                                    optimised = true;
                                     false
                                 } else {
                                     // Fragment was fine, keep it
@@ -446,6 +484,10 @@ impl Grammar {
                 }
             }
         }
+        println!("Number of single-term expressions simplified: {}", single_term_expressions);
+        println!("Number of single-term non-terminals simplified: {}", single_term_nonterms);
+        println!("Number of NOPs found: {}", NOPs);
+        println!();
     }
 
     /**
@@ -457,11 +499,9 @@ impl Grammar {
         - same principle follows for a longer chain of single shortest path non-terminals
     **/
     fn optimise_stepcount(&mut self) {
-        println!();
-        println!("*******************************************************************");
-        println!("*                        OPTIMISE STEPCOUNT                       *");
-        println!("*******************************************************************");
-        println!();
+        debug!("*******************************************************************");
+        debug!("*                        OPTIMISE STEPCOUNT                       *");
+        debug!("*******************************************************************\n");
 
         // initially, start node
         // stack to store fragments
@@ -473,6 +513,12 @@ impl Grammar {
         let mut chained: HashSet<usize> = HashSet::new();
         let mut visited_nonterms = 0;
 
+        // keep track of a total number of skipped nodes (for data)
+        let mut total_skipped = 0;
+
+        // keep track of a number of paths that have been shortened (for data)
+        let mut no_of_chains = 0;
+
         while !stack.is_empty() {
             // discover fragments with single shortest path
             // pop fragment from top of the stack
@@ -481,7 +527,6 @@ impl Grammar {
             match parent {
                 Fragment::NonTerminal(options, .., shortest) => {
                     visited_nonterms += 1;
-                    debug!("Number of visited nonterms: {}", visited_nonterms);
 
                     // if more than 1 options then add them to the stack to further explore
                     for option in options {
@@ -494,8 +539,6 @@ impl Grammar {
                                 if !visited.contains(&option.0) {
                                     stack.push_back(*option);
                                     visited.insert(option.0);
-                                    // debug!("Adding to the stack:");
-                                    // self.print_fragment(option.clone());
                                 }
                             }
                             _ => {
@@ -507,7 +550,6 @@ impl Grammar {
                     // if it has been in a chain, it already is optimised
                     // DFS for a chain
                     if shortest.len() == 1 && !chained.contains(&parent_id) {
-                        debug!("Found a single shortest option non-terminal {}", parent_id);
                         // search for non-terminals to skip
                         // add all of single path non-terminal chain to the vector
                         let mut chain: Vec<usize> = Vec::new();
@@ -515,13 +557,11 @@ impl Grammar {
                         let mut chain_broke = false;
                         while !chain_broke {
                             chain.push(curr.clone());
-                            debug!("Adding non-terminal {} to the chain.", curr);
                             // get next in chain
                             if let Fragment::NonTerminal(.., prev_shortest) =
                             self.fragments.get(curr.clone()).unwrap().clone() {
                                 curr = prev_shortest[0].0
                             }
-                            debug!("Next curr: {}", curr);
 
                             let curr_fragment = self.fragments.get(curr.clone()).unwrap();
                             match curr_fragment {
@@ -529,10 +569,8 @@ impl Grammar {
                                 Fragment::NonTerminal(.., curr_shortest) => {
                                     if curr_shortest.len() != 1 {
                                         chain_broke = true;
-                                        debug!("fragment {curr} broke the chain!");
-                                        self.print_fragment(FragmentId(curr));
                                     }
-                                    if !visited.contains(&curr){
+                                    if !visited.contains(&curr) {
                                         // add the non-term to the stack for further exploration
                                         stack.push_back(FragmentId(curr));
                                     }
@@ -542,14 +580,10 @@ impl Grammar {
                                 }
                             }
                         }
-                        debug!("Total chain size: {}", chain.len());
-                        debug!("Chain: {:?}", chain);
-                        for id in &chain {
-                            self.print_fragment(FragmentId(*id));
-                        }
                         if chain.len() > 1 {
-                            debug!("Min id for chain: {}", curr);
-                            self.print_fragment(FragmentId(curr));
+                            no_of_chains += 1;
+                            // kipping all in chain except for last one
+                            total_skipped += chain.len() - 1;
                             let new_shortest = Vec::from([FragmentId(curr)]);
                             // change shortest path of each fragment in the chain
                             while !chain.is_empty() {
@@ -557,8 +591,7 @@ impl Grammar {
                                 chained.insert(curr_id);
                                 let f = self.fragments.get(curr_id).unwrap();
                                 match f {
-                                    Fragment::NonTerminal(opt, probs, steps, curr_shortest) => {
-                                        debug!("curr_shortest for {} changed from {} to {}!", curr_id, curr_shortest[0].0, curr);
+                                    Fragment::NonTerminal(opt, probs, steps, _) => {
                                         self.fragments[curr_id] =
                                             Fragment::NonTerminal(opt.clone(),
                                                                   probs.clone(),
@@ -593,30 +626,14 @@ impl Grammar {
                 }
             }
         }
+        println!("Skipped a total of {} fragments in {} shortest paths", total_skipped, no_of_chains);
+        println!();
     }
 
     fn allocate_fragment(&mut self, fragment: Fragment) -> FragmentId {
         let id = self.fragments.len();
         self.fragments.push(fragment);
         FragmentId(id)
-    }
-
-    // overwrite the fragment with new information
-    fn reallocate_nonterm(&mut self, fragment: Fragment, f_name: &String) -> FragmentId {
-        let mut id;
-        if self.name_to_fragment.contains_key(f_name) {
-            id = *self.name_to_fragment.get(f_name).unwrap();
-            match self.fragments.get(id.0).unwrap() {
-                Fragment::NonTerminal(..) => {
-                    self.fragments[id.0] = fragment;
-                }
-                _ => { panic!("No such non_term!") }
-            }
-        } else {
-            id = self.allocate_fragment(fragment);
-        }
-
-        id
     }
 
     fn print_fragment(&self, id: FragmentId) {
@@ -645,7 +662,7 @@ impl Grammar {
             Fragment::Terminal(x) => {
                 write!(&mut f_print, "Terminal {}: \"{}\"", id.0, std::str::from_utf8(x).unwrap());
             }
-            Fragment::NonTerminal(options, ..,  shortest) => {
+            Fragment::NonTerminal(options, .., shortest) => {
                 write!(&mut f_print, "Non-terminal {}: with {} options and {} shortest paths:\n", id.0, options.len(), shortest.len());
                 for e in options {
                     let f_e = self.fragments.get(e.0).unwrap();
@@ -693,7 +710,7 @@ impl Grammar {
     pub fn program<P: AsRef<Path>>(&self, path: P, max_depth: usize) {
         let mut program = String::new();
         program += &*format!(r#"
-#[allow(unused)]
+#![allow(unused)]
 use std::cell::Cell;
 use std::time::Instant;
 
@@ -713,7 +730,8 @@ fn main(){{
         if (iters & 0xfffff) == 0 {{
             let elapsed = (Instant::now() - it).as_secs_f64();
             let bytes_per_sec = generated as f64 / elapsed;
-            print!("MiB/sec: {{:12.4}} | example: {{}}\n", bytes_per_sec / 1024. / 1024., String::from_utf8_lossy(&*fuzzer.buf));
+            // print!("MiB/sec: {{:12.4}} | example: {{}}\n", bytes_per_sec / 1024. / 1024., String::from_utf8_lossy(&*fuzzer.buf));
+            print!("MiB/sec: {{:12.4}}\n", bytes_per_sec / 1024. / 1024.);
         }}
     }}
 
@@ -736,54 +754,121 @@ impl Fuzzer {{
 "#, self.name_to_fragment.get(&*self.start).unwrap().0);
         // create a function for each fragment in grammar
         for (id, fragment) in self.fragments.iter().enumerate() {
-            program += &format!("   fn fragment_{}(&mut self, depth: usize){{\n", id);
             match fragment {
                 Fragment::NonTerminal(options, probs, .., shortest) => {
-                    // if only one shortest, there is no need to put it in a vector
-                    let one_shortest = shortest.len() == 1;
-
-                    // if depth not exceeded
-                    program += &format!("       if depth < {}{{\n", max_depth);
-                    // get a random number using distributed probability
-                    program += &format!("           //options: {}, prob: {} \n", options.len(), probs.len());
-                    program += &format!("           match self.rand() % {} {{ \n", probs.len());
-                    for (p_id, p) in probs.iter().enumerate() {
-                        program += &format!("               {} => self.fragment_{}(depth+1),\n", p_id, p.0);
+                    program += &format!("   fn fragment_{}(&mut self, depth: usize){{\n", id);
+                    program += &format!("       if depth > {}{{\n", max_depth);
+                    if !FULL_CORRECTNESS{
+                        program += &format!("           return;\n");
+                    }else{
+                        // get a random number using distributed probability
+                        program += &format!("           //shortest: {} \n", shortest.len());
+                        program += &format!("           match self.rand() % {} {{ \n", shortest.len());
+                        for (p_id, p) in shortest.iter().enumerate() {
+                            match self.fragments.get(p.0).unwrap() {
+                                Fragment::Terminal(value) => {
+                                    if SAFE_ONLY {
+                                        program += &format!("               {} => self.buf.extend_from_slice(&{:?}),\n", p_id, value);
+                                    }else {
+                                        program += &format!(r#"               {} => {{
+                    unsafe {{
+                        let old_size = self.buf.len();
+                        let new_size = old_size + {};
+                        if new_size > self.buf.capacity() {{
+                            self.buf.reserve(new_size - old_size);
+                        }}
+                        std::ptr::copy_nonoverlapping({:?}.as_ptr(), self.buf.as_mut_ptr().offset(old_size as isize), {});
+                        self.buf.set_len(new_size);
+                    }}
+               }}
+"#, p_id, value.len(), value, value.len());
+                                    }
+                                }
+                                Fragment::Nop => {
+                                    program += &format!("               {} => {{}},\n", p_id);
+                                }
+                                _ => program += &format!("               {} => self.fragment_{}(depth+1),\n", p_id, p.0)
+                            }
+                        }
+                        program += &format!("               _ => unreachable!(),\n");
+                        program += "            }\n";
                     }
-                    program += &format!("               _ => unreachable!(),\n");
-                    program += "            }\n";
-                    // if max_depth exceeded - follow shortest path
+                    // depth < max_depth
                     program += "        } else{\n";
                     // get a random number using distributed probability
-                    program += &format!("           //shortest: {} \n", shortest.len());
-                    program += &format!("           match self.rand() % {} {{ \n", shortest.len());
-                    for (p_id, p) in shortest.iter().enumerate() {
-                        program += &format!("               {} => self.fragment_{}(depth+1),\n", p_id, p.0);
+                    program += &format!("           match self.rand() % {} {{ \n", probs.len());
+                    for (p_id, p) in probs.iter().enumerate() {
+                        match self.fragments.get(p.0).unwrap() {
+                            Fragment::Nop => program += &format!("               {} => {{}},\n", p_id),
+                            Fragment::Terminal(value) => {
+                                if SAFE_ONLY {
+                                    program += &format!("               {} => self.buf.extend_from_slice(&{:?}),\n", p_id, value);
+                                }else {
+                                    program += &format!(r#"               {} => {{
+                    unsafe {{
+                        let old_size = self.buf.len();
+                        let new_size = old_size + {};
+                        if new_size > self.buf.capacity() {{
+                            self.buf.reserve(new_size - old_size);
+                        }}
+                        std::ptr::copy_nonoverlapping({:?}.as_ptr(), self.buf.as_mut_ptr().offset(old_size as isize), {});
+                        self.buf.set_len(new_size);
+                    }}
+                }}
+"#, p_id, value.len(), value, value.len());
+                                }
+                            }
+                            _ => program += &format!("               {} => self.fragment_{}(depth+1),\n", p_id, p.0)
+                        }
                     }
                     program += &format!("               _ => unreachable!(),\n");
                     program += "            }\n";
                     program += "        }\n";
-
-
+                    program += "    }\n";
                 }
                 Fragment::Expression(terms, _) => {
-                    // call the function of each term
-                    for term in terms{
-                        program += &format!("       self.fragment_{}(depth+1);\n", term.0)
+                    program += &format!("   fn fragment_{}(&mut self, depth: usize){{\n", id);
+                    if !FULL_CORRECTNESS{
+                        program += &format!("       if depth > {}{{\n", max_depth);
+                        program += &format!("           return;\n       }}\n");
                     }
+                    // call the function of each term
+                    for term in terms {
+                        match self.fragments.get(term.0).unwrap() {
+                            Fragment::NonTerminal(..) | Fragment::Expression(..) => {
+                                program += &format!("       self.fragment_{}(depth+1);\n", term.0);
+                            }
+                            Fragment::Terminal(value) => {
+                                if SAFE_ONLY {
+                                    program += &format!("       self.buf.extend_from_slice(&{:?});\n", value);
+                                } else {
+                                    // following gamozolabs observaion on extend_from_slice,
+                                    // this unsafe snippet does the same thing causing speedup
+                                    program += &format!(r#"
+            unsafe {{
+                let old_size = self.buf.len();
+                let new_size = old_size + {};
+                if new_size > self.buf.capacity() {{
+                    self.buf.reserve(new_size - old_size);
+                }}
+                std::ptr::copy_nonoverlapping({:?}.as_ptr(), self.buf.as_mut_ptr().offset(old_size as isize), {});
+                self.buf.set_len(new_size);
+            }}
+    "#, value.len(), value, value.len());
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
+                    program += "    }\n";
                 }
-                Fragment::Terminal(value) => {
-                    // add the value to the input
-                    program += &format!("       self.buf.extend_from_slice(&{:?});\n", value);
+                Fragment::Terminal(_) => {
+                    // no need for a function, inlined
                 }
-                Fragment::Nop => {
-
-                }
+                Fragment::Nop => {}
             }
-            program += "    }\n";
         }
         program += "}\n";
-        // print!("{}\n", program);
         // Write out the test application
         std::fs::write(path, program)
             .expect("Failed to create output Rust application");
@@ -803,8 +888,15 @@ impl Fuzzer {{
         stack.clear();
         stack.push(*start);
 
+
         while !stack.is_empty() {
+            // println!("{:#?}\n", String::from_utf8_lossy(&buf));
+
             let cur = stack.pop().unwrap();
+
+            if buf.len() > 128 * 128 * 2 {
+                return;
+            }
 
             if max_depth == -1 || depth < max_depth {
                 match self.fragments.get(cur.0).unwrap() {
@@ -849,13 +941,50 @@ impl Fuzzer {{
 
 fn main() -> std::io::Result<()> {
     env_logger::init();
-    info!("starting up");
-    // serialize grammar input
-    let grammar_json: GrammarJson = serde_json::from_slice(&std::fs::read("res/expressions.json")?)?;
-    let grammar = Grammar::new(&grammar_json);
-    debug!("{:?}", grammar.name_to_fragment);
+    // Get access to the command line arguments
+    let args: Vec<String> = std::env::args().collect();
+    if args.len() != 5 {
+        print!("usage: f2 <grammar json> <output Rust file> <output binary name> <max depth>\n");
+        return Ok(());
+    }
 
-    grammar.program("src/F2.rs", 20);
+    // Read the grammar json
+    let grammar: GrammarJson = serde_json::from_slice(
+        &std::fs::read(&args[1])?)?;
+    println!("Loaded grammar json\n");
+
+    // Convert the grammar file to the Rust structure
+    let mut grammar = Grammar::new(&grammar);
+    println!("Converted grammar to a Rust structure\n");
+
+    // turn all 1-child expressions into the child itself, add NOPs where it is possible
+    grammar.optimise();
+    println!("Optimised grammar\n");
+
+    // find the shortest paths to completion
+    grammar.find_steps();
+    println!("Found shortest completion paths in grammar.");
+
+    // skip nodes in the paths if possible
+    grammar.optimise_stepcount();
+
+    // Generate a Rust application
+    grammar.program(&args[2],
+                    args[4].parse().expect("Invalid digit in max depth"));
+    print!("Generated Rust source file\n");
+
+    // Compile the application
+    // rustc -O -g test.rs -C target-cpu=native
+    let status = Command::new("rustc")
+        .arg("-O")                // Optimize the binary
+        .arg("-g")                // Generate debug information
+        .arg(&args[2])            // Name of the input Rust file
+        .arg("-C")                // Optimize for the current microarchitecture
+        .arg("target-cpu=native")
+        .arg("-o")                // Output filename
+        .arg(&args[3]).spawn()?.wait()?;
+    assert!(status.success(), "Failed to compile Rust binary");
+    print!("Created Rust binary!\n");
 
     // let mut buf: Vec<u8> = Vec::new();
     //
@@ -868,12 +997,12 @@ fn main() -> std::io::Result<()> {
     //
     // for iters in 1u64.. {
     //     buf.clear();
-    //     grammar.generate(&mut stack, &mut buf, 64);
+    //     grammar.generate(&mut stack, &mut buf, );
     //     // debug!("{}", String::from_utf8_lossy(&buf));
     //     // num of u8 = bytes bc byte = 8 bits
     //     generated += buf.len();
     //
-    //     if (iters & 0xffff) == 0 {
+    //     if (iters & 0xffffff) == 0 {
     //         let elapsed = (Instant::now() - it).as_secs_f64();
     //         let bytes_per_sec = generated as f64 / elapsed;
     //         print!("MiB sec: {:12.6} | Example: {:#?}\n", bytes_per_sec / 1024. / 1024., String::from_utf8_lossy(&buf));

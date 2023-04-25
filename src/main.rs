@@ -727,11 +727,11 @@ fn main(){{
         fuzzer.fragment_{}(0);
         generated += fuzzer.buf.len();
         // Filter to reduce the amount of times printing occurs
-        if (iters & 0xfffff) == 0 {{
+        if (iters & 0xffffff) == 0 {{
             let elapsed = (Instant::now() - it).as_secs_f64();
             let bytes_per_sec = generated as f64 / elapsed;
-            // print!("MiB/sec: {{:12.4}} | example: {{}}\n", bytes_per_sec / 1024. / 1024., String::from_utf8_lossy(&*fuzzer.buf));
-            print!("MiB/sec: {{:12.4}}\n", bytes_per_sec / 1024. / 1024.);
+            print!("MiB/sec: {{:12.4}} | example: {{}}\n", bytes_per_sec / 1024. / 1024., String::from_utf8_lossy(&*fuzzer.buf));
+            // print!("MiB/sec: {{:12.4}}\n", bytes_per_sec / 1024. / 1024.);
         }}
     }}
 
@@ -756,8 +756,8 @@ impl Fuzzer {{
         for (id, fragment) in self.fragments.iter().enumerate() {
             match fragment {
                 Fragment::NonTerminal(options, probs, .., shortest) => {
-                    program += &format!("   fn fragment_{}(&mut self, depth: usize){{\n", id);
-                    program += &format!("       if depth > {}{{\n", max_depth);
+                    program += &format!("   fn fragment_{}(&mut self, mut depth: usize){{\n", id);
+                    program += &format!("       if depth > {}{{\n", max_depth-1);
                     if !FULL_CORRECTNESS{
                         program += &format!("           return;\n");
                     }else{
@@ -767,10 +767,13 @@ impl Fuzzer {{
                         for (p_id, p) in shortest.iter().enumerate() {
                             match self.fragments.get(p.0).unwrap() {
                                 Fragment::Terminal(value) => {
+                                    // open the arm
+                                    program += &format!("               {} => {{\n", p_id);
+
                                     if SAFE_ONLY {
-                                        program += &format!("               {} => self.buf.extend_from_slice(&{:?}),\n", p_id, value);
+                                        program += &format!("                   self.buf.extend_from_slice(&{:?})\n", value);
                                     }else {
-                                        program += &format!(r#"               {} => {{
+                                        program += &format!(r#"                   {{
                     unsafe {{
                         let old_size = self.buf.len();
                         let new_size = old_size + {};
@@ -780,9 +783,10 @@ impl Fuzzer {{
                         std::ptr::copy_nonoverlapping({:?}.as_ptr(), self.buf.as_mut_ptr().offset(old_size as isize), {});
                         self.buf.set_len(new_size);
                     }}
-               }}
-"#, p_id, value.len(), value, value.len());
+"#, value.len(), value, value.len());
                                     }
+                                    // close the arm
+                                    program += &format!("               }},\n");
                                 }
                                 Fragment::Nop => {
                                     program += &format!("               {} => {{}},\n", p_id);
@@ -829,7 +833,7 @@ impl Fuzzer {{
                 Fragment::Expression(terms, _) => {
                     program += &format!("   fn fragment_{}(&mut self, depth: usize){{\n", id);
                     if !FULL_CORRECTNESS{
-                        program += &format!("       if depth > {}{{\n", max_depth);
+                        program += &format!("       if depth > {}{{\n", max_depth-1);
                         program += &format!("           return;\n       }}\n");
                     }
                     // call the function of each term

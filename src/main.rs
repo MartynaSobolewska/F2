@@ -6,9 +6,6 @@ extern crate core;
 
 use std::cell::Cell;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet, VecDeque};
-// use std::collections::btree_map::BTreeMap;
-// use std::collections::btree_set::BTreeSet;
-// use std::collections::vec_deque::VecDeque;
 use serde::{Deserialize, Serialize};
 use log::{info, warn};
 use std::fmt::Write;
@@ -716,7 +713,7 @@ use std::time::Instant;
 
 fn main(){{
     let mut fuzzer = Fuzzer{{
-        seed: Cell::new(0x34cc028e11b4f89b),
+        seed: Cell::new(0x34cc028e11b4f79),
         buf:   Vec::new(),
     }};
 
@@ -727,11 +724,11 @@ fn main(){{
         fuzzer.fragment_{}(0);
         generated += fuzzer.buf.len();
         // Filter to reduce the amount of times printing occurs
-        if (iters & 0xffffff) == 0 {{
+        if (iters & 0xfffff) == 0 {{
             let elapsed = (Instant::now() - it).as_secs_f64();
             let bytes_per_sec = generated as f64 / elapsed;
-            print!("MiB/sec: {{:12.4}} | example: {{}}\n", bytes_per_sec / 1024. / 1024., String::from_utf8_lossy(&*fuzzer.buf));
-            // print!("MiB/sec: {{:12.4}}\n", bytes_per_sec / 1024. / 1024.);
+            // print!("MiB/sec: {{:12.4}} | example: {{}}\n", bytes_per_sec / 1024. / 1024., String::from_utf8_lossy(&*fuzzer.buf));
+            print!("MiB/sec: {{:12.4}}\n", bytes_per_sec / 1024. / 1024.);
         }}
     }}
 
@@ -773,7 +770,7 @@ impl Fuzzer {{
                                     if SAFE_ONLY {
                                         program += &format!("                   self.buf.extend_from_slice(&{:?})\n", value);
                                     }else {
-                                        program += &format!(r#"                   {{
+                                        program += &format!(r#"
                     unsafe {{
                         let old_size = self.buf.len();
                         let new_size = old_size + {};
@@ -798,7 +795,7 @@ impl Fuzzer {{
                         program += "            }\n";
                     }
                     // depth < max_depth
-                    program += "        } else{\n";
+                    program += "       } else {\n";
                     // get a random number using distributed probability
                     program += &format!("           match self.rand() % {} {{ \n", probs.len());
                     for (p_id, p) in probs.iter().enumerate() {
@@ -818,7 +815,7 @@ impl Fuzzer {{
                         std::ptr::copy_nonoverlapping({:?}.as_ptr(), self.buf.as_mut_ptr().offset(old_size as isize), {});
                         self.buf.set_len(new_size);
                     }}
-                }}
+               }}
 "#, p_id, value.len(), value, value.len());
                                 }
                             }
@@ -969,8 +966,8 @@ fn main() -> std::io::Result<()> {
     grammar.find_steps();
     println!("Found shortest completion paths in grammar.");
 
-    // skip nodes in the paths if possible
-    grammar.optimise_stepcount();
+    // // skip nodes in the paths if possible
+    // grammar.optimise_stepcount();
 
     // Generate a Rust application
     grammar.program(&args[2],
@@ -1001,17 +998,17 @@ fn main() -> std::io::Result<()> {
     //
     // for iters in 1u64.. {
     //     buf.clear();
-    //     grammar.generate(&mut stack, &mut buf, );
+    //     grammar.generate(&mut stack, &mut buf, args[4].parse().expect("Invalid digit in max depth"));
     //     // debug!("{}", String::from_utf8_lossy(&buf));
     //     // num of u8 = bytes bc byte = 8 bits
     //     generated += buf.len();
     //
-    //     if (iters & 0xffffff) == 0 {
+    //     if (iters & 0xffff) == 0 {
     //         let elapsed = (Instant::now() - it).as_secs_f64();
     //         let bytes_per_sec = generated as f64 / elapsed;
     //         print!("MiB sec: {:12.6} | Example: {:#?}\n", bytes_per_sec / 1024. / 1024., String::from_utf8_lossy(&buf));
     //     }
     // }
-
+    //
     Ok(())
 }

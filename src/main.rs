@@ -1,5 +1,4 @@
-mod F2;
-
+#![allow(non_snake_case)]
 #[macro_use]
 extern crate log;
 extern crate core;
@@ -7,8 +6,7 @@ extern crate core;
 use std::cell::Cell;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet, VecDeque};
 use serde::{Deserialize, Serialize};
-use log::{info, warn};
-use std::fmt::Write;
+use log::warn;
 use std::path::Path;
 use std::process::Command;
 use std::string::String;
@@ -149,7 +147,7 @@ impl Grammar {
                 probabilities.push(probability.unwrap());
 
                 for term in &option_without_prob {
-                    let mut term_id;
+                    let term_id;
                     // non-terminal
                     if grammar.name_to_fragment.contains_key(term) {
                         term_id = grammar.name_to_fragment[term];
@@ -301,7 +299,6 @@ impl Grammar {
                         // if min is not u32::MAX, shortest have been found.
                         else {
                             if shortest.len() == 0 {
-                                self.print_fragment(FragmentId(curr_id));
                                 panic!("HERE");
                             }
                             self.fragments[curr_id] =
@@ -508,7 +505,6 @@ impl Grammar {
         let mut visited: HashSet<usize> = HashSet::new();
         // store fragments that have been in a chain before
         let mut chained: HashSet<usize> = HashSet::new();
-        let mut visited_nonterms = 0;
 
         // keep track of a total number of skipped nodes (for data)
         let mut total_skipped = 0;
@@ -523,7 +519,6 @@ impl Grammar {
             let parent = self.fragments.get(parent_id).unwrap();
             match parent {
                 Fragment::NonTerminal(options, .., shortest) => {
-                    visited_nonterms += 1;
 
                     // if more than 1 options then add them to the stack to further explore
                     for option in options {
@@ -633,55 +628,55 @@ impl Grammar {
         FragmentId(id)
     }
 
-    fn print_fragment(&self, id: FragmentId) {
-        let f = self.fragments.get(id.0).unwrap();
-        let mut f_print = String::new();
-
-        match f {
-            Fragment::Expression(x, _) => {
-                write!(&mut f_print, "Expression {} with {} items: \n", id.0, x.len());
-                for e in x {
-                    let f_e = self.fragments.get(e.0).unwrap();
-                    match f_e {
-                        Fragment::Terminal(term) => {
-                            write!(&mut f_print, "\tterm \"{}\"\n", std::str::from_utf8(term).unwrap());
-                        }
-                        Fragment::NonTerminal(..) => {
-                            write!(&mut f_print, "\tnonterm {}\n", e.0);
-                        }
-                        Fragment::Expression(_, _) => {
-                            write!(&mut f_print, "\texpression {}\n", e.0);
-                        }
-                        Fragment::Nop => { write!(&mut f_print, "\tNOP\n"); }
-                    }
-                }
-            }
-            Fragment::Terminal(x) => {
-                write!(&mut f_print, "Terminal {}: \"{}\"", id.0, std::str::from_utf8(x).unwrap());
-            }
-            Fragment::NonTerminal(options, .., shortest) => {
-                write!(&mut f_print, "Non-terminal {}: with {} options and {} shortest paths:\n", id.0, options.len(), shortest.len());
-                for e in options {
-                    let f_e = self.fragments.get(e.0).unwrap();
-                    match f_e {
-                        Fragment::Terminal(term) => {
-                            write!(&mut f_print, "\tterm \"{}\"\n", std::str::from_utf8(term).unwrap());
-                        }
-                        Fragment::NonTerminal(..) => {
-                            write!(&mut f_print, "\tnonterm {}\n", e.0);
-                        }
-                        Fragment::Expression(_, _) => {
-                            write!(&mut f_print, "\texpression {}\n", e.0);
-                        }
-                        Fragment::Nop => { write!(&mut f_print, "\tNOP\n"); }
-                    }
-                }
-            }
-            Fragment::Nop => { write!(&mut f_print, "NOP\n"); }
-        }
-
-        debug!("{}", f_print.clone());
-    }
+    // fn print_fragment(&self, id: FragmentId) {
+    //     let f = self.fragments.get(id.0).unwrap();
+    //     let mut f_print = String::new();
+    //
+    //     match f {
+    //         Fragment::Expression(x, _) => {
+    //             write!(&mut f_print, "Expression {} with {} items: \n", id.0, x.len());
+    //             for e in x {
+    //                 let f_e = self.fragments.get(e.0).unwrap();
+    //                 match f_e {
+    //                     Fragment::Terminal(term) => {
+    //                         write!(&mut f_print, "\tterm \"{}\"\n", std::str::from_utf8(term).unwrap());
+    //                     }
+    //                     Fragment::NonTerminal(..) => {
+    //                         write!(&mut f_print, "\tnonterm {}\n", e.0);
+    //                     }
+    //                     Fragment::Expression(_, _) => {
+    //                         write!(&mut f_print, "\texpression {}\n", e.0);
+    //                     }
+    //                     Fragment::Nop => { write!(&mut f_print, "\tNOP\n"); }
+    //                 }
+    //             }
+    //         }
+    //         Fragment::Terminal(x) => {
+    //             write!(&mut f_print, "Terminal {}: \"{}\"", id.0, std::str::from_utf8(x).unwrap());
+    //         }
+    //         Fragment::NonTerminal(options, .., shortest) => {
+    //             write!(&mut f_print, "Non-terminal {}: with {} options and {} shortest paths:\n", id.0, options.len(), shortest.len());
+    //             for e in options {
+    //                 let f_e = self.fragments.get(e.0).unwrap();
+    //                 match f_e {
+    //                     Fragment::Terminal(term) => {
+    //                         write!(&mut f_print, "\tterm \"{}\"\n", std::str::from_utf8(term).unwrap());
+    //                     }
+    //                     Fragment::NonTerminal(..) => {
+    //                         write!(&mut f_print, "\tnonterm {}\n", e.0);
+    //                     }
+    //                     Fragment::Expression(_, _) => {
+    //                         write!(&mut f_print, "\texpression {}\n", e.0);
+    //                     }
+    //                     Fragment::Nop => { write!(&mut f_print, "\tNOP\n"); }
+    //                 }
+    //             }
+    //         }
+    //         Fragment::Nop => { write!(&mut f_print, "NOP\n"); }
+    //     }
+    //
+    //     debug!("{}", f_print.clone());
+    // }
 
     // Initialize the RNG
     pub fn seed(&self, val: usize) {
@@ -752,7 +747,7 @@ impl Fuzzer {{
         // create a function for each fragment in grammar
         for (id, fragment) in self.fragments.iter().enumerate() {
             match fragment {
-                Fragment::NonTerminal(options, probs, .., shortest) => {
+                Fragment::NonTerminal(_, probs, .., shortest) => {
                     program += &format!("   fn fragment_{}(&mut self, mut depth: usize){{\n", id);
                     program += &format!("       if depth > {}{{\n", max_depth-1);
                     if !FULL_CORRECTNESS{
@@ -967,7 +962,7 @@ fn main() -> std::io::Result<()> {
     println!("Found shortest completion paths in grammar.");
 
     // // skip nodes in the paths if possible
-    // grammar.optimise_stepcount();
+    grammar.optimise_stepcount();
 
     // Generate a Rust application
     grammar.program(&args[2],
@@ -987,28 +982,27 @@ fn main() -> std::io::Result<()> {
     assert!(status.success(), "Failed to compile Rust binary");
     print!("Created Rust binary!\n");
 
-    // let mut buf: Vec<u8> = Vec::new();
-    //
-    // let mut stack = Vec::new();
-    // let mut rng = rand::thread_rng();
-    // grammar.seed(rng.gen::<i8>() as usize);
-    //
-    // let mut generated = 0usize;
-    // let it = Instant::now();
-    //
-    // for iters in 1u64.. {
-    //     buf.clear();
-    //     grammar.generate(&mut stack, &mut buf, args[4].parse().expect("Invalid digit in max depth"));
-    //     // debug!("{}", String::from_utf8_lossy(&buf));
-    //     // num of u8 = bytes bc byte = 8 bits
-    //     generated += buf.len();
-    //
-    //     if (iters & 0xffff) == 0 {
-    //         let elapsed = (Instant::now() - it).as_secs_f64();
-    //         let bytes_per_sec = generated as f64 / elapsed;
-    //         print!("MiB sec: {:12.6} | Example: {:#?}\n", bytes_per_sec / 1024. / 1024., String::from_utf8_lossy(&buf));
-    //     }
-    // }
-    //
+    let mut buf: Vec<u8> = Vec::new();
+
+    let mut stack = Vec::new();
+    let mut rng = rand::thread_rng();
+    grammar.seed(rng.gen::<i8>() as usize);
+
+    let mut generated = 0usize;
+    let it = Instant::now();
+
+    for iters in 1u64.. {
+        buf.clear();
+        grammar.generate(&mut stack, &mut buf, args[4].parse().expect("Invalid digit in max depth"));
+        // num of u8 = bytes bc byte = 8 bits
+        generated += buf.len();
+
+        if (iters & 0xffff) == 0 {
+            let elapsed = (Instant::now() - it).as_secs_f64();
+            let bytes_per_sec = generated as f64 / elapsed;
+            print!("MiB sec: {:12.6} | Example: {:#?}\n", bytes_per_sec / 1024. / 1024., String::from_utf8_lossy(&buf));
+        }
+    }
+
     Ok(())
 }

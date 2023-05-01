@@ -95,6 +95,9 @@ I would advise playing around with the two to achieve the optimal performance fo
 | 16    | 419 MiB/s  | 448 MiB/s  | 442 MiB/s | 452 MiB/s   | 371 MiB/s   | 547 MiB/s   | 531 MiB/s   |
 | 32    | 276 MiB/s  | 276 MiB/s  | 221 MiB/s | 279 MiB/s   | 260 MiB/s   | 388 MiB/s   | 402 MiB/s   |
 | 64    | 254 MiB/s  | 261 MiB/s  | 220 MiB/s | 256 MiB/s   | 248 MiB/s   | 368 MiB/s   | 393 MiB/s   |
+
+
+<img width="1151" alt="image" src="https://user-images.githubusercontent.com/54640700/235455697-5100c4ca-8d77-47ba-aab2-32b2e13b38f3.png">
   
 ### json throughput measurements for Fzero, F1 and F1. where C stands for FULL_CORRECTNESS, S for SAFE_ONLY, t for true, f for false. Measured on AMD Ryzen 9 5900X (x86)
   
@@ -105,3 +108,7 @@ I would advise playing around with the two to achieve the optimal performance fo
 | 16    | 100 MiB/s | 101 MiB/s | 107 MiB/s | 107 MiB/s   | 115 MiB/s   | 133 MiB/s   | 136 MiB/s   |
 | 32    | 100 MiB/s | 103 MiB/s | 103 MiB/s | 108 MiB/s   | 115 MiB/s   | 131 MiB/s   | 142 MiB/s   |
 | 64    | 104 MiB/s | 105 MiB/s | 110 MiB/s | 113 MiB/s   | 115 MiB/s   | 126 MiB/s   | 139 MiB/s   |
+
+
+<img width="1155" alt="image" src="https://user-images.githubusercontent.com/54640700/235455725-3963e9ea-5e19-4670-8bee-892943af760c.png">
+
